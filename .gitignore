@@ -31,5 +31,3 @@ qrme-frontend/out/
 .env
 .env.local
 .env.*.local
-infra/envs/*.tfvars
-!infra/envs/*.tfvars.example
