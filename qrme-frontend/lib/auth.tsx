@@ -1,7 +1,3 @@
-/**
- * QR.me — Auth helpers.
- * Wraps Cognito auth with a simple mock mode for local dev.
- */
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -17,6 +13,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
+  confirmSignUp: (email: string, code: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -24,27 +21,42 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const USE_MOCK = !process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
+const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '';
+const COGNITO_URL = 'https://cognito-idp.us-east-1.amazonaws.com/';
+
+async function cognitoPost(action: string, body: object) {
+  const res = await fetch(COGNITO_URL, {
+    method: 'POST',
+    headers: {
+      'X-Amz-Target': `AWSCognitoIdentityProviderService.${action}`,
+      'Content-Type': 'application/x-amz-json-1.1',
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || data.__type || 'Error de autenticación');
+  return data;
+}
+
+function decodeJwt(token: string): Record<string, string> {
+  const payload = token.split('.')[1];
+  return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
     const stored = localStorage.getItem('qrme_auth');
     if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem('qrme_auth');
-      }
+      try { setUser(JSON.parse(stored)); } catch { localStorage.removeItem('qrme_auth'); }
     }
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     if (USE_MOCK) {
-      // Mock login
       const mockUser: AuthUser = {
         userId: 'mock-user-' + email.split('@')[0],
         email,
@@ -56,16 +68,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Real Cognito auth would go here via AWS Amplify
-    throw new Error('Configure NEXT_PUBLIC_COGNITO_USER_POOL_ID for real auth');
+    const data = await cognitoPost('InitiateAuth', {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      AuthParameters: { USERNAME: email, PASSWORD: password },
+      ClientId: CLIENT_ID,
+    });
+
+    const { AccessToken, IdToken } = data.AuthenticationResult;
+    const claims = decodeJwt(IdToken);
+    const authUser: AuthUser = { userId: claims.sub, email: claims.email, token: AccessToken };
+
+    setUser(authUser);
+    localStorage.setItem('qrme_auth', JSON.stringify(authUser));
+    localStorage.setItem('qrme_token', AccessToken);
   };
 
   const register = async (email: string, password: string) => {
     if (USE_MOCK) {
-      // Mock register = same as login
       return login(email, password);
     }
-    throw new Error('Configure NEXT_PUBLIC_COGNITO_USER_POOL_ID for real auth');
+
+    await cognitoPost('SignUp', {
+      ClientId: CLIENT_ID,
+      Username: email,
+      Password: password,
+      UserAttributes: [{ Name: 'email', Value: email }],
+    });
+
+    // Señal para que el UI muestre el paso de confirmación
+    throw new Error('CONFIRMATION_REQUIRED');
+  };
+
+  const confirmSignUp = async (email: string, code: string) => {
+    await cognitoPost('ConfirmSignUp', {
+      ClientId: CLIENT_ID,
+      Username: email,
+      ConfirmationCode: code,
+    });
   };
 
   const logout = () => {
@@ -75,16 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!user,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isLoading, login, register, confirmSignUp, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
@@ -92,8 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 }
