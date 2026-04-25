@@ -53,6 +53,7 @@ jobs:
       - name: Generar dev.tfvars
         working-directory: infra
         run: |
+          mkdir -p envs
           cat > envs/dev.tfvars << EOF
           environment        = "dev"
           aws_region         = "us-east-1"
