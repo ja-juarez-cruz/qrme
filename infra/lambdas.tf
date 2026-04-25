@@ -93,6 +93,28 @@ resource "aws_iam_role_policy" "lambda_s3_photos" {
   })
 }
 
+# -------------------------------------------------------------------
+# Política S3: escribir HTMLs generados
+# -------------------------------------------------------------------
+resource "aws_iam_role_policy" "lambda_s3_web" {
+  name = "qrme-lambda-s3-web-${var.environment}"
+  role = aws_iam_role.lambda_exec_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "${aws_s3_bucket.web.arn}/*"
+      }
+    ]
+  })
+}
+
 
 # ═══════════════════════════════════════════════════════════════
 # ZIPS DE LAS LAMBDAS
@@ -307,6 +329,7 @@ resource "aws_lambda_function" "create_qrcode" {
       TEMPLATES_TABLE = aws_dynamodb_table.templates.name
       USERS_TABLE     = aws_dynamodb_table.users.name
       BASE_URL        = var.frontend_url
+      WEB_BUCKET      = aws_s3_bucket.web.id
     }
   }
 

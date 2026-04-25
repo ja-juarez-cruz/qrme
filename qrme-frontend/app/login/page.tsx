@@ -19,7 +19,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) router.push('/dashboard');
+    if (isAuthenticated) router.push('/dashboard/qrs');
   }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +31,7 @@ function LoginForm() {
       if (mode === 'confirm') {
         await confirmSignUp(email, code);
         await login(email, password);
-        router.push('/dashboard');
+        router.push('/dashboard/qrs');
         return;
       }
 
@@ -39,8 +39,8 @@ function LoginForm() {
         await register(email, password);
       } else {
         await login(email, password);
-        router.push('/dashboard');
       }
+      router.push('/dashboard/qrs');
     } catch (err: unknown) {
       if (err instanceof Error && err.message === 'CONFIRMATION_REQUIRED') {
         setMode('confirm');

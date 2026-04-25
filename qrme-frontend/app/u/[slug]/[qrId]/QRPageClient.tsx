@@ -60,7 +60,19 @@ export default function QRPageClient() {
         }
         const json = await res.json();
         setData(json);
+        
+        // Track scan in background
         fetch(`${API_BASE}/track/scan/${qrId}`, { method: 'POST' }).catch(() => {});
+
+        // Handle redirection based on type
+        if (json.qr?.type === 'redirect' && json.qr?.redirectUrl) {
+          window.location.href = json.qr.redirectUrl;
+          return;
+        } else if (json.qr?.type === 'template' && json.qr?.s3Key) {
+          // If the S3 bucket is the same as the frontend host, we can just navigate to the file
+          window.location.href = '/' + json.qr.s3Key;
+          return;
+        }
       } catch {
         setData(null);
       } finally {
