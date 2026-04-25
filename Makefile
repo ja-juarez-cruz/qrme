@@ -133,6 +133,8 @@ deploy-prod: init-prod
 
 sync-web-dev:
 	@echo 'Build + sync frontend -> dev'
+	$(eval CF_ID_DEV := $(shell AWS_PROFILE=$(PROFILE_DEV) terraform -chdir=$(INFRA_DIR) output -raw cloudfront_distribution_id))
+	$(eval CF_DOMAIN_DEV := $(shell AWS_PROFILE=$(PROFILE_DEV) terraform -chdir=$(INFRA_DIR) output -raw cloudfront_domain))
 	cd $(FRONTEND_DIR) && \
 		NEXT_PUBLIC_API_URL=$(API_URL_DEV) \
 		NEXT_PUBLIC_COGNITO_USER_POOL_ID=$$(AWS_PROFILE=$(PROFILE_DEV) terraform -chdir=$(INFRA_DIR) output -raw cognito_user_pool_id) \
@@ -140,16 +142,43 @@ sync-web-dev:
 		NEXT_PUBLIC_COGNITO_DOMAIN=$$(AWS_PROFILE=$(PROFILE_DEV) terraform -chdir=$(INFRA_DIR) output -raw cognito_domain) \
 		npm run build
 	AWS_PROFILE=$(PROFILE_DEV) aws s3 sync $(FRONTEND_DIR)/out/ s3://$(WEB_BUCKET_DEV) --delete
+	AWS_PROFILE=$(PROFILE_DEV) aws cloudfront create-invalidation \
+		--distribution-id $(CF_ID_DEV) --paths "/*" --output text
+	@printf '\n'
+	@printf '======================================\n'
+	@printf '  Deploy Dev completado\n'
+	@printf '======================================\n'
+	@printf '\n'
+	@printf '  Frontend:    $(CF_DOMAIN_DEV)\n'
+	@printf '  API Gateway: $(API_URL_DEV)\n'
+	@printf '  S3 bucket:   $(WEB_BUCKET_DEV)\n'
+	@printf '  CF dist ID:  $(CF_ID_DEV)\n'
+	@printf '\n'
 
 sync-web-prod:
 	@echo 'Build + sync frontend -> prod'
+	$(eval CF_ID_PROD := $(shell AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw cloudfront_distribution_id))
+	$(eval CF_DOMAIN_PROD := $(shell AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw cloudfront_domain))
+	$(eval API_URL_PROD := $(shell AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw api_gateway_url))
 	cd $(FRONTEND_DIR) && \
-		NEXT_PUBLIC_API_URL=$$(AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw api_gateway_url) \
+		NEXT_PUBLIC_API_URL=$(API_URL_PROD) \
 		NEXT_PUBLIC_COGNITO_USER_POOL_ID=$$(AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw cognito_user_pool_id) \
 		NEXT_PUBLIC_COGNITO_CLIENT_ID=$$(AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw cognito_client_id) \
 		NEXT_PUBLIC_COGNITO_DOMAIN=$$(AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw cognito_domain) \
 		npm run build
 	AWS_PROFILE=$(PROFILE_PROD) aws s3 sync $(FRONTEND_DIR)/out/ s3://$(WEB_BUCKET_PROD) --delete
+	AWS_PROFILE=$(PROFILE_PROD) aws cloudfront create-invalidation \
+		--distribution-id $(CF_ID_PROD) --paths "/*" --output text
+	@printf '\n'
+	@printf '======================================\n'
+	@printf '  Deploy Prod completado\n'
+	@printf '======================================\n'
+	@printf '\n'
+	@printf '  Frontend:    $(CF_DOMAIN_PROD)\n'
+	@printf '  API Gateway: $(API_URL_PROD)\n'
+	@printf '  S3 bucket:   $(WEB_BUCKET_PROD)\n'
+	@printf '  CF dist ID:  $(CF_ID_PROD)\n'
+	@printf '\n'
 
 # ── Seed ─────────────────────────────────────────────────────────────────────
 

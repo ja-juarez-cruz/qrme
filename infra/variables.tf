@@ -21,12 +21,6 @@ variable "project_name" {
   default     = "qrme"
 }
 
-variable "frontend_url" {
-  description = "URL del frontend (para CORS)"
-  type        = string
-  default     = "http://localhost:3000"
-}
-
 variable "tags" {
   description = "Tags comunes a aplicar a todos los recursos"
   type        = map(string)
@@ -36,23 +30,14 @@ variable "tags" {
   }
 }
 
-# ─── Cognito ─────────────────────────────────────────────────────────────────
-
-variable "cognito_callback_urls" {
-  description = "URLs de callback para Cognito OAuth"
-  type        = list(string)
-  default     = ["http://localhost:3000/auth/callback"]
-}
-
-variable "cognito_logout_urls" {
-  description = "URLs de logout para Cognito"
-  type        = list(string)
-  default     = ["http://localhost:3000"]
-}
-
 # ─── S3 ──────────────────────────────────────────────────────────────────────
 
 variable "photos_bucket_name" {
   description = "Nombre del bucket S3 para fotos de perfil"
+  type        = string
+}
+
+variable "web_bucket_name" {
+  description = "Nombre del bucket S3 para el frontend (CloudFront lo usa como origen)"
   type        = string
 }
