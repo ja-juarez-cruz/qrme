@@ -41,3 +41,21 @@ variable "web_bucket_name" {
   description = "Nombre del bucket S3 para el frontend (CloudFront lo usa como origen)"
   type        = string
 }
+
+variable "frontend_url" {
+  description = "URL del frontend (para CORS)"
+  type        = string
+  default     = "http://localhost:3000"
+}
+
+variable "cognito_callback_urls" {
+  description = "URLs de callback para Cognito OAuth"
+  type        = list(string)
+  default     = ["http://localhost:3000/auth/callback"]
+}
+
+variable "cognito_logout_urls" {
+  description = "URLs de logout para Cognito"
+  type        = list(string)
+  default     = ["http://localhost:3000"]
+}

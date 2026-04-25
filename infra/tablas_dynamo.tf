@@ -12,6 +12,7 @@ resource "aws_dynamodb_table" "users" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "userId"
 
+
   attribute {
     name = "userId"
     type = "S"
@@ -45,6 +46,7 @@ resource "aws_dynamodb_table" "profiles" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "userId"
 
+
   attribute {
     name = "userId"
     type = "S"
@@ -66,6 +68,7 @@ resource "aws_dynamodb_table" "qrcodes" {
   name         = "qrme-qrcodes"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "qrId"
+
 
   attribute {
     name = "qrId"
@@ -99,6 +102,7 @@ resource "aws_dynamodb_table" "templates" {
   name         = "qrme-templates"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "templateId"
+
 
   attribute {
     name = "templateId"
