@@ -9,17 +9,28 @@ interface Template {
   templateId: string;
   name: string;
   description: string;
+  category?: string;
+  emoji?: string;
+  taglinePlaceholder?: string;
 }
+
+type Category = 'social' | 'profesional' | 'divulgacion';
+
+const CATEGORIES: { id: Category; label: string; emoji: string; available: boolean }[] = [
+  { id: 'social', label: 'Social', emoji: '🎭', available: true },
+  { id: 'profesional', label: 'Profesional', emoji: '💼', available: false },
+  { id: 'divulgacion', label: 'Divulgación', emoji: '📣', available: false },
+];
 
 export default function CreateQRPage() {
   const router = useRouter();
   const qrRef = useRef<HTMLDivElement>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [activeCategory, setActiveCategory] = useState<Category>('social');
   const [label, setLabel] = useState('');
   const [tagline, setTagline] = useState('');
-  
-  // New state for type and redirect
+
   const [qrType, setQrType] = useState<'template' | 'redirect'>('template');
   const [redirectUrl, setRedirectUrl] = useState('');
   const [profile, setProfile] = useState<{ displayName?: string; [key: string]: unknown } | null>(null);
@@ -36,21 +47,25 @@ export default function CreateQRPage() {
     try {
       const [templatesData, profileData] = await Promise.all([
         getTemplates(),
-        getMyProfile().catch(() => ({ profile: {} })) // Fallback si falla
+        getMyProfile().catch(() => ({ profile: {} }))
       ]);
-      setTemplates(templatesData.templates || []);
-      if (templatesData.templates?.length > 0) {
-        setSelectedTemplate(templatesData.templates[0].templateId);
-      }
-      if (profileData.profile) {
-        setProfile(profileData.profile);
-      }
+      const tmplList: Template[] = templatesData.templates || [];
+      setTemplates(tmplList);
+      const firstSocial = tmplList.find(t => (t.category || 'social') === 'social');
+      if (firstSocial) setSelectedTemplate(firstSocial.templateId);
+      if (profileData.profile) setProfile(profileData.profile);
     } catch (err) {
       console.error('Error loading templates:', err);
     } finally {
       setLoading(false);
     }
   };
+
+  const filteredTemplates = templates.filter(
+    t => (t.category || 'social') === activeCategory
+  );
+
+  const currentTemplate = templates.find(t => t.templateId === selectedTemplate);
 
   const handleCreate = async () => {
     if (!label) return;
@@ -60,8 +75,7 @@ export default function CreateQRPage() {
     setCreating(true);
     try {
       let htmlContent = '';
-      
-      // If template, generate HTML via our Next.js API route
+
       if (qrType === 'template') {
         const res = await fetch('/api/generate-html', {
           method: 'POST',
@@ -79,8 +93,8 @@ export default function CreateQRPage() {
       const data = await createQRCode({
         type: qrType,
         templateId: selectedTemplate,
-        redirectUrl: redirectUrl,
-        htmlContent: htmlContent,
+        redirectUrl,
+        htmlContent,
         label,
         tagline,
       });
@@ -113,7 +127,6 @@ export default function CreateQRPage() {
       const svgData = new XMLSerializer().serializeToString(svg);
       const svgBlob = new Blob([svgData], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(svgBlob);
-
       img.onload = () => {
         canvas.width = 1024;
         canvas.height = 1024;
@@ -137,7 +150,6 @@ export default function CreateQRPage() {
     );
   }
 
-  // Success state — show QR + download buttons
   if (createdQR) {
     return (
       <div className="animate-fade-in max-w-lg mx-auto">
@@ -147,8 +159,6 @@ export default function CreateQRPage() {
           <p className="text-[var(--color-text-muted)] mb-6">
             Tu QR está listo. Descárgalo e imprímelo donde quieras.
           </p>
-
-          {/* QR Preview */}
           <div
             ref={qrRef}
             className="inline-block p-6 bg-white rounded-2xl mb-6 animate-pulse-glow"
@@ -162,12 +172,9 @@ export default function CreateQRPage() {
               fgColor="#1a1035"
             />
           </div>
-
           <p className="text-sm text-[var(--color-text-muted)] mb-6 break-all">
             {createdQR.targetUrl as string}
           </p>
-
-          {/* Download buttons */}
           <div className="flex items-center justify-center gap-3 mb-6">
             <button onClick={() => downloadQR('png')} className="btn-primary">
               📥 Descargar PNG
@@ -176,22 +183,14 @@ export default function CreateQRPage() {
               📐 Descargar SVG
             </button>
           </div>
-
           <div className="flex items-center justify-center gap-3">
             <button
-              onClick={() => {
-                setCreatedQR(null);
-                setLabel('');
-                setTagline('');
-              }}
+              onClick={() => { setCreatedQR(null); setLabel(''); setTagline(''); }}
               className="btn-secondary"
             >
               ➕ Crear otro
             </button>
-            <button
-              onClick={() => router.push('/dashboard/qrs')}
-              className="btn-secondary"
-            >
+            <button onClick={() => router.push('/dashboard/qrs')} className="btn-secondary">
               📱 Ver mis QRs
             </button>
           </div>
@@ -207,13 +206,13 @@ export default function CreateQRPage() {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Form */}
         <div className="glass-card p-6 space-y-5">
-          
-          {/* Tipo de QR selector */}
+
+          {/* Tipo de QR */}
           <div>
             <label className="block text-sm font-medium mb-3 text-[var(--color-text-muted)]">
               ¿Qué tipo de QR quieres crear?
             </label>
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-2 gap-3 mb-2">
               <button
                 onClick={() => setQrType('template')}
                 className={`p-3 rounded-xl text-center font-medium transition-all duration-200 border ${
@@ -237,47 +236,65 @@ export default function CreateQRPage() {
             </div>
           </div>
 
-          {/* Template selector (Solo si type=template) */}
+          {/* Template selector */}
           {qrType === 'template' && (
             <div className="animate-fade-in">
-              <label className="block text-sm font-medium mb-3 text-[var(--color-text-muted)]">
+              {/* Category tabs */}
+              <div className="flex gap-1.5 mb-4 p-1 bg-[var(--color-surface)] rounded-xl">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => cat.available && setActiveCategory(cat.id)}
+                    disabled={!cat.available}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      cat.available && activeCategory === cat.id
+                        ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary-light)] border border-[var(--color-primary)]/40'
+                        : cat.available
+                        ? 'text-[var(--color-text-muted)] hover:text-white hover:bg-[var(--color-surface-light)]'
+                        : 'text-[var(--color-text-muted)]/30 cursor-not-allowed'
+                    }`}
+                  >
+                    {cat.emoji} {cat.label}
+                    {!cat.available && (
+                      <span className="ml-1 text-[10px] opacity-60">pronto</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Templates grid */}
+              <label className="block text-xs font-medium mb-2 text-[var(--color-text-muted)] uppercase tracking-wider">
                 Elige una plantilla
               </label>
-            <div className="grid gap-3">
-              {templates.map((tmpl) => (
-                <button
-                  key={tmpl.templateId}
-                  onClick={() => setSelectedTemplate(tmpl.templateId)}
-                  className={`p-4 rounded-xl text-left transition-all duration-200 border ${
-                    selectedTemplate === tmpl.templateId
-                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
-                      : 'border-[var(--color-surface-lighter)] hover:border-[var(--color-primary)]/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+              <div className="grid grid-cols-2 gap-2.5">
+                {filteredTemplates.map((tmpl) => (
+                  <button
+                    key={tmpl.templateId}
+                    onClick={() => setSelectedTemplate(tmpl.templateId)}
+                    className={`p-3.5 rounded-xl text-left transition-all duration-200 border group ${
                       selectedTemplate === tmpl.templateId
-                        ? 'border-[var(--color-primary)] bg-[var(--color-primary)]'
-                        : 'border-[var(--color-surface-lighter)]'
-                    }`}>
-                      {selectedTemplate === tmpl.templateId && (
-                        <div className="w-2 h-2 rounded-full bg-white" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-sm">{tmpl.name}</h3>
-                      <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                        {tmpl.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
+                        : 'border-[var(--color-surface-lighter)] hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-light)]'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1.5">{tmpl.emoji || '✨'}</div>
+                    <h3 className="font-semibold text-sm leading-tight mb-1">{tmpl.name}</h3>
+                    <p className="text-[10px] text-[var(--color-text-muted)] leading-snug">
+                      {tmpl.description}
+                    </p>
+                    {selectedTemplate === tmpl.templateId && (
+                      <div className="mt-2 flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
+                        <span className="text-[10px] text-[var(--color-primary-light)] font-medium">Seleccionada</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
           )}
 
-          {/* URL Input (Solo si type=redirect) */}
+          {/* URL Input */}
           {qrType === 'redirect' && (
             <div className="animate-fade-in">
               <label htmlFor="redirect-url" className="block text-sm font-medium mb-1.5 text-[var(--color-text-muted)]">
@@ -293,7 +310,7 @@ export default function CreateQRPage() {
                 required={qrType === 'redirect'}
               />
               <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                Al escanear el QR, los usuarios serán redirigidos a esta página web.
+                Al escanear el QR, los usuarios serán redirigidos a esta página.
               </p>
             </div>
           )}
@@ -326,18 +343,23 @@ export default function CreateQRPage() {
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
                 className="input-field"
-                placeholder='Ej: "Soltera disponible 💃"'
+                placeholder={currentTemplate?.taglinePlaceholder ? `Ej: "${currentTemplate.taglinePlaceholder}"` : 'Tu mensaje aquí...'}
                 maxLength={200}
               />
               <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                Este mensaje aparecerá en tu página QR pública
+                Este mensaje aparecerá en tu página pública al escanear el QR.
               </p>
             </div>
           )}
 
           <button
             onClick={handleCreate}
-            disabled={(!label || creating) || (qrType === 'template' && !selectedTemplate) || (qrType === 'redirect' && !redirectUrl)}
+            disabled={
+              !label ||
+              creating ||
+              (qrType === 'template' && !selectedTemplate) ||
+              (qrType === 'redirect' && !redirectUrl)
+            }
             className="btn-primary w-full text-center disabled:opacity-50"
           >
             {creating ? '⏳ Creando...' : '🚀 Crear QR'}
@@ -350,12 +372,18 @@ export default function CreateQRPage() {
 
           {qrType === 'template' ? (
             <div className="social-card p-6 text-center animate-fade-in">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-400/20 to-pink-400/20 mx-auto mb-4 flex items-center justify-center text-3xl">
+              <div className="text-4xl mb-3">{currentTemplate?.emoji || '✨'}</div>
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400/20 to-pink-400/20 mx-auto mb-4 flex items-center justify-center text-2xl">
                 👤
               </div>
               <h2 className="text-xl font-bold mb-1">{profile?.displayName || 'Tu Nombre'}</h2>
-              <p className="text-[var(--color-accent)] font-semibold text-lg mb-3">
-                {tagline || '"Tu tagline aquí"'}
+              {currentTemplate && (
+                <p className="text-xs text-[var(--color-primary-light)] font-medium mb-2 uppercase tracking-wider">
+                  {currentTemplate.name}
+                </p>
+              )}
+              <p className="text-[var(--color-accent)] font-semibold text-base mb-3">
+                &ldquo;{tagline || currentTemplate?.taglinePlaceholder || 'Tu tagline aquí'}&rdquo;
               </p>
               <div className="flex flex-wrap justify-center gap-2 mb-4">
                 <span className="badge text-xs">🎵 música</span>
@@ -373,7 +401,7 @@ export default function CreateQRPage() {
                 Los usuarios irán directamente a:
               </p>
               <div className="bg-[var(--color-surface)] px-4 py-2 rounded-lg text-[var(--color-primary-light)] font-mono text-sm max-w-full overflow-hidden text-ellipsis whitespace-nowrap border border-[var(--color-surface-lighter)]">
-                {redirectUrl || "https://..."}
+                {redirectUrl || 'https://...'}
               </div>
             </div>
           )}
