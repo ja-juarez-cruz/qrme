@@ -189,7 +189,7 @@ jobs:
           aws s3api head-bucket --bucket ${{ env.WEB_BUCKET }} 2>/dev/null || {
             aws s3api create-bucket --bucket ${{ env.WEB_BUCKET }} --region us-east-1
             aws s3api put-bucket-website --bucket ${{ env.WEB_BUCKET }} \
-              --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"404/index.html"}}'
+              --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"u/_/_/index.html"}}'
             aws s3api put-public-access-block --bucket ${{ env.WEB_BUCKET }} \
               --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
             aws s3api put-bucket-policy --bucket ${{ env.WEB_BUCKET }} \
