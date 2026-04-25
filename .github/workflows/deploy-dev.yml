@@ -87,15 +87,14 @@ jobs:
         working-directory: infra
         run: |
           mkdir -p envs
-          WEB_URL="http://${{ env.WEB_BUCKET }}.s3-website-us-east-1.amazonaws.com"
           cat > envs/dev.tfvars << EOF
           environment        = "dev"
           aws_region         = "us-east-1"
-          frontend_url       = "$WEB_URL"
+          frontend_url       = "http://${{ env.WEB_BUCKET }}.s3-website-us-east-1.amazonaws.com"
           photos_bucket_name = "qrme-photos-dev"
 
-          cognito_callback_urls = ["$WEB_URL/auth/callback/"]
-          cognito_logout_urls   = ["$WEB_URL"]
+          cognito_callback_urls = ["http://localhost:3000/auth/callback"]
+          cognito_logout_urls   = ["http://localhost:3000"]
           EOF
 
       - name: Terraform Init
