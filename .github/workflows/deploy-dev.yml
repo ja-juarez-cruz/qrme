@@ -14,7 +14,7 @@ env:
 
 jobs:
   deploy:
-    name: Deploy to jajc_dev (${{ secrets.AWS_ACCOUNT_ID_DEV }})
+    name: Deploy to dev
     runs-on: ubuntu-latest
     environment: dev
 

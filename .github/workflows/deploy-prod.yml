@@ -107,7 +107,7 @@ jobs:
 
   # ── Push a main: tests + infra ───────────────────────────────────────────
   deploy:
-    name: Deploy to prod (${{ secrets.AWS_ACCOUNT_ID_PROD }})
+    name: Deploy to prod
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: prod
