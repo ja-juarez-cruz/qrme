@@ -1,6 +1,6 @@
 environment        = "dev"
-photos_bucket_name = "qrme-photos-dev"
-web_bucket_name    = "qrme-web-dev"
+photos_bucket_name = "qrme-photos-dev-jajc"
+web_bucket_name    = "qrme-web-dev-jajc"
 
 # URLs para desarrollo local y pruebas
 frontend_url          = "http://localhost:3000"
