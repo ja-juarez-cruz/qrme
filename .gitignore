@@ -1,0 +1,35 @@
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/build/
+infra/.tmp/
+*.tfstate
+*.tfstate.backup
+.terraform.tfstate.lock.info
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js
+qrme-frontend/node_modules/
+qrme-frontend/.next/
+qrme-frontend/out/
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+.env.*.local
+infra/envs/*.tfvars
+!infra/envs/*.tfvars.example

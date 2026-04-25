@@ -1,0 +1,91 @@
+name: QR.me CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  # ── Backend Tests ──────────────────────────────────────────────
+  test-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lambdas
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-test.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --cov=. --cov-report=term-missing --cov-fail-under=80
+
+  # ── Terraform Plan (solo en PR) ────────────────────────────────
+  terraform-plan:
+    if: github.event_name == 'pull_request'
+    needs: test-backend
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init -backend-config=backends/dev.hcl
+
+      - name: Terraform Plan
+        working-directory: infra
+        run: terraform plan -var-file=envs/dev.tfvars -no-color
+
+  # ── Terraform Apply (solo merge a main) ────────────────────────
+  terraform-apply:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: test-backend
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init -backend-config=backends/dev.hcl
+
+      - name: Terraform Apply
+        working-directory: infra
+        run: terraform apply -var-file=envs/dev.tfvars -auto-approve
