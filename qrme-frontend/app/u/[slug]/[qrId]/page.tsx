@@ -37,16 +37,18 @@ const DEMO_DATA = {
   },
 };
 
+// Required for Next.js static export — actual pages are fetched client-side
+export function generateStaticParams() {
+  return [];
+}
+
 async function getQRData(slug: string, qrId: string) {
   if (!API_BASE) {
-    // Use demo data in development
     return DEMO_DATA;
   }
 
   try {
-    const res = await fetch(`${API_BASE}/public/qr/${slug}/${qrId}`, {
-      next: { revalidate: 60 }, // ISR: revalidate every 60 seconds
-    });
+    const res = await fetch(`${API_BASE}/public/qr/${slug}/${qrId}`);
 
     if (!res.ok) return null;
     return res.json();

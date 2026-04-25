@@ -5,6 +5,9 @@ PROFILE_DEV     = jajc-dev
 PROFILE_PROD    = jajc-prod
 FRONTEND_DIR    = qrme-frontend
 BACKEND_DIR     = lambdas
+WEB_BUCKET_DEV  = qrme-web-dev
+WEB_BUCKET_PROD = qrme-web-prod
+API_URL_DEV     = https://pxo1j6kgi7.execute-api.us-east-1.amazonaws.com/dev
 
 help:
 	@echo ''
@@ -19,6 +22,8 @@ help:
 	@echo '  make plan-prod        Ver cambios pendientes en prod'
 	@echo '  make deploy-dev       Terraform apply en dev'
 	@echo '  make deploy-prod      Terraform apply en prod (pide confirmación)'
+	@echo '  make sync-web-dev     Build + sync frontend -> s3://$(WEB_BUCKET_DEV)'
+	@echo '  make sync-web-prod    Build + sync frontend -> s3://$(WEB_BUCKET_PROD)'
 	@echo '  make seed-dev         Insertar plantilla social-v1 en DynamoDB dev'
 	@echo '  make seed-prod        Insertar plantilla social-v1 en DynamoDB prod'
 	@echo '  make test-backend     Correr tests del backend con pytest + moto'
@@ -123,6 +128,28 @@ deploy-prod: init-prod
 	@read -p 'Escribe "prod" para confirmar: ' confirm; \
 	if [ "$$confirm" != "prod" ]; then echo 'Cancelado.'; exit 1; fi
 	AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) apply -var-file=envs/prod.tfvars
+
+# ── Frontend ─────────────────────────────────────────────────────────────────
+
+sync-web-dev:
+	@echo 'Build + sync frontend -> dev'
+	cd $(FRONTEND_DIR) && \
+		NEXT_PUBLIC_API_URL=$(API_URL_DEV) \
+		NEXT_PUBLIC_COGNITO_USER_POOL_ID=$$(AWS_PROFILE=$(PROFILE_DEV) terraform -chdir=$(INFRA_DIR) output -raw cognito_user_pool_id) \
+		NEXT_PUBLIC_COGNITO_CLIENT_ID=$$(AWS_PROFILE=$(PROFILE_DEV) terraform -chdir=$(INFRA_DIR) output -raw cognito_client_id) \
+		NEXT_PUBLIC_COGNITO_DOMAIN=$$(AWS_PROFILE=$(PROFILE_DEV) terraform -chdir=$(INFRA_DIR) output -raw cognito_domain) \
+		npm run build
+	AWS_PROFILE=$(PROFILE_DEV) aws s3 sync $(FRONTEND_DIR)/out/ s3://$(WEB_BUCKET_DEV) --delete
+
+sync-web-prod:
+	@echo 'Build + sync frontend -> prod'
+	cd $(FRONTEND_DIR) && \
+		NEXT_PUBLIC_API_URL=$$(AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw api_gateway_url) \
+		NEXT_PUBLIC_COGNITO_USER_POOL_ID=$$(AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw cognito_user_pool_id) \
+		NEXT_PUBLIC_COGNITO_CLIENT_ID=$$(AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw cognito_client_id) \
+		NEXT_PUBLIC_COGNITO_DOMAIN=$$(AWS_PROFILE=$(PROFILE_PROD) terraform -chdir=$(INFRA_DIR) output -raw cognito_domain) \
+		npm run build
+	AWS_PROFILE=$(PROFILE_PROD) aws s3 sync $(FRONTEND_DIR)/out/ s3://$(WEB_BUCKET_PROD) --delete
 
 # ── Seed ─────────────────────────────────────────────────────────────────────
 
