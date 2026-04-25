@@ -42,12 +42,6 @@ variable "web_bucket_name" {
   type        = string
 }
 
-variable "frontend_url" {
-  description = "URL del frontend (para CORS)"
-  type        = string
-  default     = "http://localhost:3000"
-}
-
 variable "cognito_callback_urls" {
   description = "URLs de callback para Cognito OAuth"
   type        = list(string)

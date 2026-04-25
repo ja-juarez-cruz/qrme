@@ -18,17 +18,20 @@ export default function QRListPage() {
   const [qrcodes, setQrcodes] = useState<QRCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     loadQRs();
   }, []);
 
   const loadQRs = async () => {
+    setFetchError(false);
     try {
       const data = await listQRCodes();
       setQrcodes(data.qrcodes || []);
     } catch (err) {
       console.error('Error loading QRs:', err);
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -69,7 +72,18 @@ export default function QRListPage() {
         </Link>
       </div>
 
-      {qrcodes.length === 0 ? (
+      {fetchError ? (
+        <div className="glass-card p-12 text-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold mb-2">Error al cargar QRs</h2>
+          <p className="text-[var(--color-text-muted)] mb-6">
+            No se pudo conectar con el servidor. Revisa tu sesión e intenta de nuevo.
+          </p>
+          <button onClick={() => { setLoading(true); loadQRs(); }} className="btn-primary">
+            🔄 Reintentar
+          </button>
+        </div>
+      ) : qrcodes.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <div className="text-5xl mb-4">📱</div>
           <h2 className="text-xl font-bold mb-2">Aún no tienes QRs</h2>

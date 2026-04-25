@@ -6,29 +6,26 @@ import SocialFunCard from '@/components/templates/SocialFunCard';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
-const DEMO_DATA = {
+type QRData = {
   qr: {
-    qrId: 'demo-qr',
-    tagline: 'Soltera disponible 💃',
-    templateId: 'social-v1',
-    scanCount: 42,
-  },
+    qrId: string;
+    tagline?: string;
+    templateId?: string;
+    scanCount?: number;
+    type?: string;
+    redirectUrl?: string;
+    s3Key?: string;
+  };
   profile: {
-    displayName: 'María García',
-    age: 25,
-    bio: '✨ Amante de la vida, los viajes y la buena música. Siempre lista para una aventura nueva. Si me escaneas, ya somos amigos.',
-    interests: ['🎵 Música', '✈️ Viajes', '🍳 Cocina', '📸 Fotografía', '🎬 Cine'],
-    photoUrl: '',
-    socialLinks: {
-      instagram: '@mariagarcia',
-      whatsapp: '+52 55 1234 5678',
-      tiktok: '@mariagarcia',
-    },
-  },
-  user: { slug: 'maria-garcia' },
-};
-
-type QRData = typeof DEMO_DATA | null;
+    displayName?: string;
+    age?: number;
+    bio?: string;
+    interests?: string[];
+    photoUrl?: string;
+    socialLinks?: Record<string, string>;
+  };
+  user: { slug: string };
+} | null;
 
 export default function QRPageClient() {
   const params = useParams();
@@ -39,19 +36,7 @@ export default function QRPageClient() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!slug || slug === '_') {
-      setData(DEMO_DATA);
-      setLoading(false);
-      return;
-    }
-
     const fetchData = async () => {
-      if (!API_BASE) {
-        setData(DEMO_DATA);
-        setLoading(false);
-        return;
-      }
-
       try {
         const res = await fetch(`${API_BASE}/public/qr/${slug}/${qrId}`);
         if (!res.ok) {
@@ -60,16 +45,14 @@ export default function QRPageClient() {
         }
         const json = await res.json();
         setData(json);
-        
+
         // Track scan in background
         fetch(`${API_BASE}/track/scan/${qrId}`, { method: 'POST' }).catch(() => {});
 
-        // Handle redirection based on type
         if (json.qr?.type === 'redirect' && json.qr?.redirectUrl) {
           window.location.href = json.qr.redirectUrl;
           return;
         } else if (json.qr?.type === 'template' && json.qr?.s3Key) {
-          // If the S3 bucket is the same as the frontend host, we can just navigate to the file
           window.location.href = '/' + json.qr.s3Key;
           return;
         }

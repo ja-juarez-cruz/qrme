@@ -328,7 +328,7 @@ resource "aws_lambda_function" "create_qrcode" {
       QRCODES_TABLE   = aws_dynamodb_table.qrcodes.name
       TEMPLATES_TABLE = aws_dynamodb_table.templates.name
       USERS_TABLE     = aws_dynamodb_table.users.name
-      BASE_URL        = var.frontend_url
+      BASE_URL        = "https://${aws_cloudfront_distribution.web.domain_name}"
       WEB_BUCKET      = aws_s3_bucket.web.id
     }
   }

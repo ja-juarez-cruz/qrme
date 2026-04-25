@@ -86,6 +86,11 @@ jobs:
         working-directory: infra
         run: terraform apply -auto-approve tfplan
 
+      - name: Seed templates en DynamoDB
+        run: |
+          pip install boto3 --quiet
+          python3 scripts/seed_templates.py
+
       # ── Frontend ──────────────────────────────────────────────────
 
       - name: Setup Node.js

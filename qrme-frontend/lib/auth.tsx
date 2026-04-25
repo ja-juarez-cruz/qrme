@@ -20,7 +20,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const USE_MOCK = !process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '';
 const COGNITO_URL = 'https://cognito-idp.us-east-1.amazonaws.com/';
 
@@ -56,18 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    if (USE_MOCK) {
-      const mockUser: AuthUser = {
-        userId: 'mock-user-' + email.split('@')[0],
-        email,
-        token: 'mock-jwt-token-' + Date.now(),
-      };
-      setUser(mockUser);
-      localStorage.setItem('qrme_auth', JSON.stringify(mockUser));
-      localStorage.setItem('qrme_token', mockUser.token);
-      return;
-    }
-
     const data = await cognitoPost('InitiateAuth', {
       AuthFlow: 'USER_PASSWORD_AUTH',
       AuthParameters: { USERNAME: email, PASSWORD: password },
@@ -84,10 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (email: string, password: string) => {
-    if (USE_MOCK) {
-      return login(email, password);
-    }
-
     await cognitoPost('SignUp', {
       ClientId: CLIENT_ID,
       Username: email,
@@ -95,7 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       UserAttributes: [{ Name: 'email', Value: email }],
     });
 
-    // Señal para que el UI muestre el paso de confirmación
     throw new Error('CONFIRMATION_REQUIRED');
   };
 

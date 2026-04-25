@@ -8,7 +8,13 @@
       "Bash(git -C /Users/jajc/Documents/git/QRME log --oneline -5)",
       "Bash(git -C /Users/jajc/Documents/git/QRME show af50d0a --name-only)",
       "Bash(git -C /Users/jajc/Documents/git/QRME show af50d0a -- \"qrme-frontend/app/u/[slug]/[qrId]/page.tsx\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(terraform -chdir=infra output -raw cognito_user_pool_id)",
+      "Bash(terraform -chdir=infra output -raw cognito_client_id)",
+      "Bash(terraform -chdir=infra output -raw cognito_domain)",
+      "Bash(AWS_PROFILE=jajc-dev terraform -chdir=infra output -raw cognito_user_pool_id)",
+      "Bash(AWS_PROFILE=jajc-dev terraform -chdir=infra output -raw cognito_client_id)",
+      "Bash(AWS_PROFILE=jajc-dev terraform -chdir=infra output -raw cognito_domain)"
     ]
   }
 }

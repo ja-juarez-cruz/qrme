@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getTemplates, createQRCode, getMyProfile } from '@/lib/api';
+import { generateHtml } from '@/lib/generate-html';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface Template {
@@ -38,6 +39,7 @@ export default function CreateQRPage() {
   const [creating, setCreating] = useState(false);
   const [createdQR, setCreatedQR] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [templateError, setTemplateError] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -51,11 +53,13 @@ export default function CreateQRPage() {
       ]);
       const tmplList: Template[] = templatesData.templates || [];
       setTemplates(tmplList);
+      if (tmplList.length === 0) setTemplateError(true);
       const firstSocial = tmplList.find(t => (t.category || 'social') === 'social');
       if (firstSocial) setSelectedTemplate(firstSocial.templateId);
       if (profileData.profile) setProfile(profileData.profile);
     } catch (err) {
       console.error('Error loading templates:', err);
+      setTemplateError(true);
     } finally {
       setLoading(false);
     }
@@ -77,17 +81,7 @@ export default function CreateQRPage() {
       let htmlContent = '';
 
       if (qrType === 'template') {
-        const res = await fetch('/api/generate-html', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            profile: profile || {},
-            qr: { label, tagline, templateId: selectedTemplate }
-          })
-        });
-        if (!res.ok) throw new Error('Error generando HTML de la plantilla');
-        const data = await res.json();
-        htmlContent = data.html;
+        htmlContent = generateHtml(profile || {}, { label, tagline, templateId: selectedTemplate });
       }
 
       const data = await createQRCode({
@@ -266,6 +260,17 @@ export default function CreateQRPage() {
               <label className="block text-xs font-medium mb-2 text-[var(--color-text-muted)] uppercase tracking-wider">
                 Elige una plantilla
               </label>
+              {templateError ? (
+                <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-center">
+                  <p className="text-sm text-red-400 mb-2">No se pudieron cargar las plantillas</p>
+                  <button
+                    onClick={() => { setTemplateError(false); setLoading(true); loadTemplates(); }}
+                    className="text-xs text-[var(--color-primary-light)] underline"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ) : (
               <div className="grid grid-cols-2 gap-2.5">
                 {filteredTemplates.map((tmpl) => (
                   <button
@@ -291,6 +296,7 @@ export default function CreateQRPage() {
                   </button>
                 ))}
               </div>
+              )}
             </div>
           )}
 
