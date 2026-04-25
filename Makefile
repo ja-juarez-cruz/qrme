@@ -5,8 +5,8 @@ PROFILE_DEV     = jajc-dev
 PROFILE_PROD    = jajc-prod
 FRONTEND_DIR    = qrme-frontend
 BACKEND_DIR     = lambdas
-WEB_BUCKET_DEV  = qrme-web-dev-jajc
-WEB_BUCKET_PROD = qrme-web-prod-jajc
+WEB_BUCKET_DEV  = qrme-web-dev
+WEB_BUCKET_PROD = qrme-web-prod
 API_URL_DEV     = https://pxo1j6kgi7.execute-api.us-east-1.amazonaws.com/dev
 
 help:
