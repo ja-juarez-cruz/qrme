@@ -1,0 +1,80 @@
+name: Deploy Dev
+
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.7.0
+
+jobs:
+  deploy:
+    name: Deploy to jajc_dev (${{ secrets.AWS_ACCOUNT_ID_DEV }})
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Backend Tests ──────────────────────────────────────────────
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        working-directory: lambdas
+        run: pip install -r requirements-test.txt
+
+      - name: Run tests
+        working-directory: lambdas
+        run: python -m pytest tests/ -v --cov=. --cov-report=term-missing --cov-fail-under=80
+
+      # ── AWS + Infraestructura ──────────────────────────────────────
+
+      - name: Configure AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_DEV }}:role/github-actions-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify identity
+        run: aws sts get-caller-identity
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Generar dev.tfvars
+        working-directory: infra
+        run: |
+          cat > envs/dev.tfvars << EOF
+          environment        = "dev"
+          aws_region         = "us-east-1"
+          frontend_url       = "http://localhost:3000"
+          photos_bucket_name = "qrme-photos-dev"
+
+          cognito_callback_urls = ["http://localhost:3000/auth/callback"]
+          cognito_logout_urls   = ["http://localhost:3000"]
+          EOF
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init -backend-config=backends/dev.hcl -reconfigure
+
+      - name: Terraform Validate
+        working-directory: infra
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: infra
+        run: terraform plan -var-file=envs/dev.tfvars -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: infra
+        run: terraform apply -auto-approve tfplan
