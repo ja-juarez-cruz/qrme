@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #7c3aed;
+  --color-primary-light: #a78bfa;
+  --color-primary-dark: #5b21b6;
+  --color-accent: #f472b6;
+  --color-accent-light: #f9a8d4;
+  --color-surface: #1e1b2e;
+  --color-surface-light: #2d2a3e;
+  --color-surface-lighter: #3d3a4e;
+  --color-text: #f1f0f5;
+  --color-text-muted: #a09bb0;
+  --color-success: #34d399;
+  --color-error: #f87171;
+  --color-warning: #fbbf24;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: linear-gradient(135deg, #0f0c1a 0%, #1a1528 40%, #15112a 100%);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+/* ── Glass card ──────────────────────────────────────────────────── */
+.glass-card {
+  background: rgba(30, 27, 46, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: 1rem;
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(124, 58, 237, 0.4);
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.1);
+  transform: translateY(-2px);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), #9333ea);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--color-primary-light);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: rgba(124, 58, 237, 0.5);
+}
+
+.btn-danger {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--color-error);
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: rgba(248, 113, 113, 0.2);
+}
+
+/* ── Form inputs ─────────────────────────────────────────────────── */
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 12, 26, 0.6);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 0.75rem;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.input-field::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ── Badge / Tag ─────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--color-primary-light);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+/* ── Gradient text ───────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Animations ──────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(124, 58, 237, 0.4); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Stagger children animations */
+.stagger-children > * {
+  opacity: 0;
+  animation: slideUp 0.4s ease forwards;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* ── Social Fun Card template ────────────────────────────────────── */
+.social-card {
+  background: linear-gradient(160deg, #1a1035 0%, #2d1b69 50%, #1a1035 100%);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.social-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent), var(--color-primary));
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-lighter);
+  border-radius: 3px;
+}

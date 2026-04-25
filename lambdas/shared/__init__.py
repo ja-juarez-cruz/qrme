@@ -1,0 +1,1 @@
+# QR.me shared utilities
