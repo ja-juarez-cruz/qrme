@@ -22,7 +22,7 @@ export default function CreateQRPage() {
   // New state for type and redirect
   const [qrType, setQrType] = useState<'template' | 'redirect'>('template');
   const [redirectUrl, setRedirectUrl] = useState('');
-  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
+  const [profile, setProfile] = useState<{ displayName?: string; [key: string]: unknown } | null>(null);
 
   const [creating, setCreating] = useState(false);
   const [createdQR, setCreatedQR] = useState<Record<string, unknown> | null>(null);
