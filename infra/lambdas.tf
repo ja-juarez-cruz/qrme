@@ -188,6 +188,24 @@ data "archive_file" "track_scan" {
 }
 
 
+
+# ═══════════════════════════════════════════════════════════════
+# SHARED LAYER
+# ═══════════════════════════════════════════════════════════════
+
+data "archive_file" "shared_layer" {
+  type        = "zip"
+  source_dir  = "${path.module}/../lambdas/layer"
+  output_path = "${path.module}/build/shared_layer.zip"
+}
+
+resource "aws_lambda_layer_version" "shared" {
+  filename            = data.archive_file.shared_layer.output_path
+  layer_name          = "qrme-shared-layer-${var.environment}"
+  source_code_hash    = data.archive_file.shared_layer.output_base64sha256
+  compatible_runtimes = ["python3.12"]
+}
+
 # ═══════════════════════════════════════════════════════════════
 # LAMBDA FUNCTIONS
 # ═══════════════════════════════════════════════════════════════
@@ -204,6 +222,7 @@ resource "aws_lambda_function" "authorizer" {
   runtime          = "python3.12"
   timeout          = 10
   memory_size      = 128
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -228,6 +247,7 @@ resource "aws_lambda_function" "get_my_profile" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -252,6 +272,7 @@ resource "aws_lambda_function" "upsert_profile" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -276,6 +297,7 @@ resource "aws_lambda_function" "list_templates" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -299,6 +321,7 @@ resource "aws_lambda_function" "list_qrcodes" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -322,6 +345,7 @@ resource "aws_lambda_function" "create_qrcode" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -349,6 +373,7 @@ resource "aws_lambda_function" "update_qrcode" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -373,6 +398,7 @@ resource "aws_lambda_function" "delete_qrcode" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -396,6 +422,7 @@ resource "aws_lambda_function" "get_public_qr" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -421,6 +448,7 @@ resource "aws_lambda_function" "get_photo_upload_url" {
   runtime          = "python3.12"
   timeout          = 15
   memory_size      = 256
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {
@@ -445,6 +473,7 @@ resource "aws_lambda_function" "track_scan" {
   runtime          = "python3.12"
   timeout          = 10
   memory_size      = 128
+  layers           = [aws_lambda_layer_version.shared.arn]
 
   environment {
     variables = {

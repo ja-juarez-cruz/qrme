@@ -6,7 +6,6 @@ No auth required. Used by Next.js ISR.
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared.db import get_table
 from shared.response import success, error
 from boto3.dynamodb.conditions import Key

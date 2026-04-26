@@ -9,8 +9,8 @@ import pytest
 import boto3
 from moto import mock_aws
 
-# Add parent to path for shared imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+# Add layer/python to path for shared imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "layer", "python"))
 
 
 @pytest.fixture(autouse=True)

@@ -9,8 +9,6 @@ import sys
 import uuid
 from datetime import datetime, timezone
 import boto3
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared.db import get_table
 from shared.auth import get_user_id
 from shared.response import success, error

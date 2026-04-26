@@ -5,7 +5,6 @@ Deletes a QR code owned by the authenticated user.
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared.db import get_table
 from shared.auth import get_user_id
 from shared.response import success, error

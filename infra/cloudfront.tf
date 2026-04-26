@@ -67,15 +67,15 @@ resource "aws_cloudfront_distribution" "web" {
   # Cuando S3 devuelve 403/404 (ruta dinámica sin archivo estático),
   # CloudFront sirve el shell de la SPA y React maneja el routing.
   custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/u/_/_/index.html"
+    error_code         = 403
+    response_code      = 200
+    response_page_path = "/u/_/_/index.html"
   }
 
   custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/u/_/_/index.html"
+    error_code         = 404
+    response_code      = 200
+    response_page_path = "/u/_/_/index.html"
   }
 
   restrictions {

@@ -7,9 +7,9 @@ resource "aws_apigatewayv2_api" "main" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins = ["*"]
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    allow_headers = ["Content-Type", "Authorization"]
+    allow_origins  = ["*"]
+    allow_methods  = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers  = ["Content-Type", "Authorization"]
     expose_headers = ["Content-Type"]
     max_age        = 300
   }
@@ -54,11 +54,11 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
 # AUTHORIZER (Cognito JWT via Lambda)
 # ========================================
 resource "aws_apigatewayv2_authorizer" "jwt" {
-  api_id           = aws_apigatewayv2_api.main.id
-  authorizer_type  = "REQUEST"
-  authorizer_uri   = aws_lambda_function.authorizer.invoke_arn
-  identity_sources = ["$request.header.Authorization"]
-  name             = "cognito-jwt-authorizer"
+  api_id                            = aws_apigatewayv2_api.main.id
+  authorizer_type                   = "REQUEST"
+  authorizer_uri                    = aws_lambda_function.authorizer.invoke_arn
+  identity_sources                  = ["$request.header.Authorization"]
+  name                              = "cognito-jwt-authorizer"
   authorizer_payload_format_version = "2.0"
   enable_simple_responses           = true
 }
