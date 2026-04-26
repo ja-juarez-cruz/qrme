@@ -91,7 +91,7 @@ jobs:
           pip install boto3 --quiet
           python3 scripts/seed_templates.py
 
-      # ── Frontend ──────────────────────────────────────────────────
+      # ── Frontend (Pruebas E2E y Deploy) ───────────────────────────
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -123,6 +123,21 @@ jobs:
           NEXT_PUBLIC_COGNITO_DOMAIN: ${{ steps.tf_outputs.outputs.cognito_domain }}
         run: npm run build
 
+      - name: Instalar navegadores para Playwright
+        working-directory: qrme-frontend
+        run: npx playwright install --with-deps
+
+      - name: Ejecutar pruebas E2E (Playwright contra backend dev)
+        working-directory: qrme-frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ env.API_URL_DEV }}
+          NEXT_PUBLIC_COGNITO_USER_POOL_ID: ${{ steps.tf_outputs.outputs.cognito_pool_id }}
+          NEXT_PUBLIC_COGNITO_CLIENT_ID: ${{ steps.tf_outputs.outputs.cognito_client_id }}
+          NEXT_PUBLIC_COGNITO_DOMAIN: ${{ steps.tf_outputs.outputs.cognito_domain }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: npm run test:e2e
+
       - name: Sync a S3
         run: aws s3 sync qrme-frontend/out/ s3://${{ steps.tf_outputs.outputs.web_bucket }} --delete
 
@@ -132,6 +147,7 @@ jobs:
             --distribution-id ${{ steps.tf_outputs.outputs.cf_distribution_id }} \
             --paths "/*"
 
+
       - name: Resumen del deploy
         run: |
           CF_DOMAIN=$(terraform -chdir=infra output -raw cloudfront_domain)
@@ -140,15 +156,16 @@ jobs:
           REGION=${{ env.AWS_REGION }}
 
           cat >> $GITHUB_STEP_SUMMARY << EOF
-          ## ✅ Deploy Dev completado
+          ## ✅ Pruebas E2E y Deploy Dev completado
 
           ### 🌐 URLs
           | Recurso | URL |
           |---|---|
           | **Frontend** | [$CF_DOMAIN]($CF_DOMAIN) |
-          | **API Gateway** | [$API_URL]($API_URL) |
+          | **API Gateway Dev** | [$API_URL]($API_URL) |
 
           ### ☁️ Recursos AWS
+
           | Recurso | Nombre |
           |---|---|
           | S3 bucket | \`$BUCKET\` |
@@ -164,3 +181,4 @@ jobs:
           | API Gateway | [Abrir API](https://console.aws.amazon.com/apigateway/main/apis?region=$REGION) |
           | Cognito | [Abrir User Pool](https://console.aws.amazon.com/cognito/v2/idp/user-pools?region=$REGION) |
           EOF
+

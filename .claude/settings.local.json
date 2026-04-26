@@ -14,7 +14,10 @@
       "Bash(terraform -chdir=infra output -raw cognito_domain)",
       "Bash(AWS_PROFILE=jajc-dev terraform -chdir=infra output -raw cognito_user_pool_id)",
       "Bash(AWS_PROFILE=jajc-dev terraform -chdir=infra output -raw cognito_client_id)",
-      "Bash(AWS_PROFILE=jajc-dev terraform -chdir=infra output -raw cognito_domain)"
+      "Bash(AWS_PROFILE=jajc-dev terraform -chdir=infra output -raw cognito_domain)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
