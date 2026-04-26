@@ -51,13 +51,19 @@ test.describe('QR.me End-to-End Flow (Dev Environment)', () => {
     // The template selector should be visible
     await expect(page.getByText('Elige una plantilla')).toBeVisible();
     
+    // We MUST select a template for the "Crear QR" button to become enabled
+    // The template buttons contain an h3 with the template name, while the Type buttons do not.
+    const firstTemplateBtn = page.locator('button:has(h3)').first();
+    await expect(firstTemplateBtn).toBeVisible({ timeout: 10000 });
+    await firstTemplateBtn.click();
+    
     // Fill the internal label
     await page.fill('input#qr-label', 'Mi Fiesta Playwright');
     
     // Fill the tagline
     await page.fill('input#qr-tagline', 'E2E Testing is fun!');
     
-    // Click create
+    // Click create (now it should be enabled)
     await page.getByRole('button', { name: /Crear QR/i }).click();
     
     // Wait for the success state and QR code to appear

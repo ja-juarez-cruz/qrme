@@ -43,7 +43,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests (only if not testing external URL) */
   webServer: process.env.PLAYWRIGHT_TEST_URL ? undefined : {
-    command: 'npm run start', // We use start instead of dev in CI if we want to test the prod build
+    command: 'npx serve@latest out -p 3000', // Serves the Next.js static export
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
