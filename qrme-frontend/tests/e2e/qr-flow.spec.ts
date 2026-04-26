@@ -67,10 +67,10 @@ test.describe('QR.me End-to-End Flow (Dev Environment)', () => {
     await page.getByRole('button', { name: /Crear QR/i }).click();
     
     // Wait for the success state and QR code to appear
-    await expect(page.getByText('¡QR Creado con éxito!')).toBeVisible();
+    await expect(page.getByText('¡QR creado!')).toBeVisible();
     
     // Verify the URL was generated
-    await expect(page.locator('input[readonly]')).toHaveValue(/http:\/\/localhost:3000\/u\/.+/);
+    await expect(page.getByText(/https?:\/\/.*\/u\/.+/)).toBeVisible();
   });
 
   test('3. Crear QR (Redirección)', async ({ page }) => {
@@ -100,7 +100,8 @@ test.describe('QR.me End-to-End Flow (Dev Environment)', () => {
     await page.getByRole('button', { name: /Crear QR/i }).click();
     
     // Wait for success
-    await expect(page.getByText('¡QR Creado con éxito!')).toBeVisible();
+    await expect(page.getByText('¡QR creado!')).toBeVisible();
+    await expect(page.getByText(/https?:\/\/.*\/u\/.+/)).toBeVisible();
   });
 
   test('4. Consultar lista y Eliminar QR', async ({ page }) => {
