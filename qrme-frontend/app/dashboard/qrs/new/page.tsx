@@ -40,6 +40,8 @@ export default function CreateQRPage() {
   const [createdQR, setCreatedQR] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [templateError, setTemplateError] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [hasUserRecord, setHasUserRecord] = useState(true);
 
   useEffect(() => {
     loadTemplates();
@@ -49,7 +51,7 @@ export default function CreateQRPage() {
     try {
       const [templatesData, profileData] = await Promise.all([
         getTemplates(),
-        getMyProfile().catch(() => ({ profile: {} }))
+        getMyProfile().catch(() => ({ profile: {}, user: null, _networkError: true }))
       ]);
       const tmplList: Template[] = templatesData.templates || [];
       setTemplates(tmplList);
@@ -57,6 +59,7 @@ export default function CreateQRPage() {
       const firstSocial = tmplList.find(t => (t.category || 'social') === 'social');
       if (firstSocial) setSelectedTemplate(firstSocial.templateId);
       if (profileData.profile) setProfile(profileData.profile);
+      if (!profileData._networkError) setHasUserRecord(!!profileData.user);
     } catch (err) {
       console.error('Error loading templates:', err);
       setTemplateError(true);
@@ -77,6 +80,7 @@ export default function CreateQRPage() {
     if (qrType === 'redirect' && !redirectUrl) return;
 
     setCreating(true);
+    setCreateError('');
     try {
       let htmlContent = '';
 
@@ -95,6 +99,7 @@ export default function CreateQRPage() {
       setCreatedQR(data.qrcode);
     } catch (err) {
       console.error('Error creating QR:', err);
+      setCreateError(err instanceof Error ? err.message : 'Error al crear el QR');
     } finally {
       setCreating(false);
     }
@@ -358,11 +363,30 @@ export default function CreateQRPage() {
             </div>
           )}
 
+          {!hasUserRecord && (
+            <div className="p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/5 text-sm">
+              <p className="text-yellow-300 font-medium mb-1">Perfil requerido</p>
+              <p className="text-[var(--color-text-muted)] mb-2">
+                Necesitas crear tu perfil antes de generar QR codes.
+              </p>
+              <a href="/dashboard/profile" className="text-[var(--color-primary-light)] underline text-xs">
+                Ir a configurar mi perfil →
+              </a>
+            </div>
+          )}
+
+          {createError && (
+            <div className="p-3 rounded-xl border border-red-500/30 bg-red-500/5 text-sm text-red-400">
+              {createError}
+            </div>
+          )}
+
           <button
             onClick={handleCreate}
             disabled={
               !label ||
               creating ||
+              !hasUserRecord ||
               (qrType === 'template' && !selectedTemplate) ||
               (qrType === 'redirect' && !redirectUrl)
             }
