@@ -48,7 +48,10 @@ resource "aws_s3_bucket_cors_configuration" "photos" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["PUT", "POST", "GET"]
-    allowed_origins = [var.frontend_url]
+    allowed_origins = [
+      "https://${aws_cloudfront_distribution.web.domain_name}",
+      "http://localhost:3000"
+    ]
     expose_headers  = ["ETag"]
     max_age_seconds = 3600
   }
