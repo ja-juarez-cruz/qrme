@@ -1,6 +1,5 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import SocialFunCard from '@/components/templates/SocialFunCard';
 
@@ -28,14 +27,22 @@ type QRData = {
 } | null;
 
 export default function QRPageClient() {
-  const params = useParams();
-  const slug = params.slug as string;
-  const qrId = params.qrId as string;
-
   const [data, setData] = useState<QRData>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // CloudFront serves /u/_/_/index.html for all 404s, so useParams() returns
+    // the placeholder '_' values from generateStaticParams(). Parse the real
+    // slug and qrId from the actual browser URL instead.
+    const parts = window.location.pathname.split('/');
+    const slug = parts[2];
+    const qrId = parts[3];
+
+    if (!slug || !qrId || slug === '_' || qrId === '_') {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const res = await fetch(`${API_BASE}/public/qr/${slug}/${qrId}`);
@@ -64,7 +71,7 @@ export default function QRPageClient() {
     };
 
     fetchData();
-  }, [slug, qrId]);
+  }, []);
 
   if (loading) {
     return (
